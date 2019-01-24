@@ -29,7 +29,7 @@ object Explorer {
      val bitcoinBlocksRDD = sc.newAPIHadoopFile(inputFile, classOf[BitcoinBlockFileInputFormat], classOf[BytesWritable], classOf[BitcoinBlock], hadoopConf)
      //Parse the blockchain and retrieve all the transaction inside
      //Transaction(PreviousID,PreviousIndex,CurrentID,CurrentIndex,BitcoinAddress,Amount)
-     val bitcoinTransactionRDD = bitcoinBlocksRDD.flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2))
+     val bitcoinTransactionRDD = bitcoinBlocksRDD.flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2)).sample(false, 0.1, 123456789)
      
      bitcoinTransactionRDD.persist()
      //Prepare the unwrapping of the transactions
@@ -43,11 +43,11 @@ object Explorer {
      
      //Join the transaction using as joining factor key == key -> (PreviousId,PreviousIndex)==(CurrentId,CurrentIndex)
      //(ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
-     val joinTransaction = mappedPrevTransaction.join(mappedCurrTransaction).map(f => (f._2))
+     val joinTransaction = mappedPrevTransaction.join(mappedCurrTransaction)
      
      //Create a new key using the common data
      //Group all the exchanges using the Transaction ID_C
-     val groupedJoinTransaction = joinTransaction.groupBy(f => f._2.getTxID.toString)
+     val groupedJoinTransaction = joinTransaction.map(f => (f._1._1,f._2)).groupByKey()
      
      //Accumulate the interesting information getting the unwrapped Transaction
      //[Index,List(Bitcoin_Address_IN,Amount,Bitcoin_Address_OUT)]
@@ -57,7 +57,7 @@ object Explorer {
      //Take all the data about the Input Bitcoin Addresses
      //[Index,List(Bitcoin_Address_IN)]
      val intermediateEntity = tableOfTransaction.map(f => (f._1,f._2.map(g => g._1)))
-     
+   
      //Compute a Cartesian product between itself
      //[Index,List(Bitcoin_Address_IN)][Index,List(Bitcoin_Address_IN)]
      val catesianProduct = intermediateEntity.cartesian(intermediateEntity)
@@ -66,7 +66,7 @@ object Explorer {
      val mapCartesianProduct = catesianProduct.map(a => if(a._1._2.intersect(a._2._2).isEmpty) a._1 else (a._1._1,a._1._2.union(a._2._2).distinct)) 
      
      //Distint all the Bitcoin_Addresses
-     val aggregateResult = mapCartesianProduct.reduceByKey(_ union _).distinct().zipWithIndex().map(f => (f._2,f._1))
+     val aggregateResult = mapCartesianProduct.reduceByKey(_ union _).map(f => f._2.distinct).zipWithIndex().map(f => (f._2,f._1))
         
      aggregateResult.saveAsTextFile(outputFile)
      }
