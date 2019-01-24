@@ -63,10 +63,10 @@ object Explorer {
      val catesianProduct = intermediateEntity.cartesian(intermediateEntity)
      
      //Compute the intersection over the cartesian product
-     val mapCartesianProduct = catesianProduct.map(a => if(a._1._2.intersect(a._2._2).isEmpty) a._1 else (a._1._1,a._1._2.union(a._2._2))) 
+     val mapCartesianProduct = catesianProduct.map(a => if(a._1._2.intersect(a._2._2).isEmpty) a._1 else (a._1._1,a._1._2.union(a._2._2).distinct)) 
      
      //Distint all the Bitcoin_Addresses
-     val aggregateResult = mapCartesianProduct.reduceByKey(_ union _).map(f => (f._1,f._2.distinct))
+     val aggregateResult = mapCartesianProduct.reduceByKey(_ union _).distinct().zipWithIndex().map(f => (f._2,f._1))
         
      aggregateResult.saveAsTextFile(outputFile)
      }
