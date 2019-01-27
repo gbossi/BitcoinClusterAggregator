@@ -29,53 +29,94 @@ object Explorer {
      val bitcoinBlocksRDD = sc.newAPIHadoopFile(inputFile, classOf[BitcoinBlockFileInputFormat], classOf[BytesWritable], classOf[BitcoinBlock], hadoopConf)
      //Parse the blockchain and retrieve all the transaction inside
      //Transaction(PreviousID,PreviousIndex,CurrentID,CurrentIndex,BitcoinAddress,Amount)
-     val bitcoinTransactionRDD = bitcoinBlocksRDD.flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2)).sample(false, 0.1, 123456789)
-     
-     bitcoinTransactionRDD.persist()
+     val bitcoinTransactionRDD = bitcoinBlocksRDD.sample(false, 0.1, 80551).flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2)).sample(false, 0.1, 80551)
+
      //Prepare the unwrapping of the transactions
+     bitcoinTransactionRDD.persist()
      
      //Map the transactions using as key (PreviousId,PreviousIndex)
-     val mappedPrevTransaction = bitcoinTransactionRDD.keyBy(f => (f.getPrevTxID.toString(),f.getPrevTxIndex))
+     val mappedPrevTransaction = bitcoinTransactionRDD.map(f => ((f.getPrevTxID.+(f.getPrevTxIndex)),f))
      //Map the transactions using as key (CurrentId,CurrentIndex)
-     val mappedCurrTransaction = bitcoinTransactionRDD.keyBy(f => (f.getTxID.toString(),f.getTxIndex))
+     val mappedCurrTransaction = bitcoinTransactionRDD.map(f => ((f.getTxID.+(f.getTxIndex)),f))
      
      bitcoinTransactionRDD.unpersist()
      
+     
      //Join the transaction using as joining factor key == key -> (PreviousId,PreviousIndex)==(CurrentId,CurrentIndex)
      //(ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
-     val joinTransaction = mappedPrevTransaction.join(mappedCurrTransaction)
+     val joinTransaction = mappedPrevTransaction.join(mappedCurrTransaction) 
      
      //Create a new key using the common data
-     //Group all the exchanges using the Transaction ID_C
-     val groupedJoinTransaction = joinTransaction.map(f => (f._1._1,f._2)).groupByKey()
+     //Group all the exchanges using the Transaction ID_B
+     val groupedJoinTransaction = joinTransaction.map(f => (f._2._2.getTxID,f._2)).groupByKey()
+
      
      //Accumulate the interesting information getting the unwrapped Transaction
-     //[Index,List(Bitcoin_Address_IN,Amount,Bitcoin_Address_OUT)]
-     val tableOfTransaction = groupedJoinTransaction.map(f => extractWalletTransaction(f._2)).zipWithIndex().map(f => (f._2,f._1))
+     //[Index,List(Bitcoin_Address_IN,Bitcoin_Address_OUT,Amount)]
+     val tableOfTransaction = groupedJoinTransaction.mapValues(f => extractWalletTransaction(f)).zipWithIndex().map(f => (f._2,f._1._2))
+     tableOfTransaction.persist()
      
-     //FOLLOWING STEPS TO CREATE THE ENTITY
+     //Checked until here
+     
      //Take all the data about the Input Bitcoin Addresses
      //[Index,List(Bitcoin_Address_IN)]
      val intermediateEntity = tableOfTransaction.map(f => (f._1,f._2.map(g => g._1)))
+     val justTransaction = tableOfTransaction.flatMap(f => f._2)
+     tableOfTransaction.unpersist()
    
      //Compute a Cartesian product between itself
      //[Index,List(Bitcoin_Address_IN)][Index,List(Bitcoin_Address_IN)]
      val catesianProduct = intermediateEntity.cartesian(intermediateEntity)
      
      //Compute the intersection over the cartesian product
-     val mapCartesianProduct = catesianProduct.map(a => if(a._1._2.intersect(a._2._2).isEmpty) a._1 else (a._1._1,a._1._2.union(a._2._2).distinct)) 
-     
-     //Distint all the Bitcoin_Addresses
+     val mapCartesianProduct = catesianProduct.map(a => if(a._1._2.intersect(a._2._2).isEmpty) a._1 else (a._1._1,a._1._2.union(a._2._2)))
+                                   .reduceByKey((acc,curr) => (acc++curr).distinct)     
+     //Distinct all the Bitcoin_Addresses
      val aggregateResult = mapCartesianProduct.reduceByKey(_ union _).map(f => f._2.distinct).zipWithIndex().map(f => (f._2,f._1))
-        
-     aggregateResult.saveAsTextFile(outputFile)
-     }
+     
+
+     //Broadcast the result and be prepared for the broadcasted join
+     aggregateResult.persist()
+     val flatResult = aggregateResult.flatMap(f => unwrapList(f))
+
+     /* Distributed computation over several nodes - not testable in local enviroment 
+      * 
+     val broadcastNodes = sc.broadcast(flatResult.collectAsMap)     
+     val edges = justTransaction.map(f =>Edge(broadcastNodes.value.get(f._1).get,broadcastNodes.value.get(f._3).get,f._2))
+    *
+    */
+     
+     //The following part is coded just for local testing
+     flatResult.persist()
+     val edges = justTransaction.keyBy(f => f._1).join(flatResult).map(k => (k._2._2,k._2._1._2,k._2._1._3))
+                     .keyBy(f => f._2).join(flatResult).map(g => Edge(g._2._1._1,g._2._2,g._2._1._3))
+     flatResult.unpersist()     
+         
+     //create the graph
+     val graph: Graph[(List[String]), BigInt] = Graph(aggregateResult, edges)
+     aggregateResult.unpersist()
+     
+     graph.triplets.saveAsTextFile(outputFile)
+
+     
+   }
    
-   def extractWalletTransaction(table : Iterable[(Transaction,Transaction)]): List[(String,BigInt,String)] ={
-     val ret = table.map(f => (f._1.getBicointAddress,f._1.getAmount,f._2.getBicointAddress)).toList
+   def extractWalletTransaction(table : Iterable[(Transaction,Transaction)]): List[(String,String,BigInt)] ={
+     //Incoming (ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
+     val ret = table.map(f => (f._2.getBicointAddress,f._1.getBicointAddress,f._1.getAmount)).toList
+     //Outgoing Add2 -> send to  -> Add1 an amount of Am1
      ret;
    } 
    
+   def unwrapList(data:(Long,List[String])): Array[(String,Long)] ={
+    val dim = data._2.length 
+    val arrayString = data._2.toArray
+    val tupleArray:Array[(String,Long)] = new Array[(String,Long)](dim)
+    for(i <-0 to dim-1){
+       tupleArray(i) = (arrayString(i),data._1)
+    }
+    tupleArray;
+    }
   
    
    def extractTransactionData(bitcoinBlock: BitcoinBlock): Array[Transaction] = {
@@ -90,10 +131,10 @@ object Explorer {
 		var resultCounter: Int = 0
 		for (i <- 0 to transactionCount-1) { 
 				val currentTx=bitcoinBlock.getTransactions().get(i)
-				val currentTxHash=BitcoinUtil.getTransactionHash(currentTx)
+				val currentTxHash=BitcoinUtil.reverseByteArray(BitcoinUtil.getTransactionHash(currentTx))
 			  for (j <-0 to  currentTx.getListOfInputs().size()-1) { 
 				  val currentTxInput=currentTx.getListOfInputs().get(j)
-				  val currentTxInputHash=currentTxInput.getPrevTransactionHash()
+				  val currentTxInputHash=BitcoinUtil.reverseByteArray(currentTxInput.getPrevTransactionHash())
 				  val currentTxInputIndex=currentTxInput.getPreviousTxOutIndex()
 				  for (k <-0 to currentTx.getListOfOutputs().size()-1) {
 					  val currentTxOutput=currentTx.getListOfOutputs().get(k)
