@@ -34,12 +34,18 @@
 <version>2.2.0</version>
 <scope>test</scope>
 </dependency>
-<dependency>
-            <groupId>org.apache.spark</groupId>
+		<dependency>
+          <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
             <version>2.4.0</version>
         </dependency>
 
+		<dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.11</artifactId>
+            <version>2.4.0</version>
+		</dependency>
+       
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
@@ -61,6 +67,11 @@
 
 <build>
     <plugins>
+        <plugin>
+  				<groupId>com.mysema.scalagen</groupId>
+  				<artifactId>scalagen-maven-plugin</artifactId>
+  				<version>0.2.2</version>
+		</plugin>
         <plugin>
             <groupId>org.scala-tools</groupId>
             <artifactId>maven-scala-plugin</artifactId>
