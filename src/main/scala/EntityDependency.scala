@@ -8,9 +8,9 @@ import org.apache.hadoop.conf._
 object EntityDependency{
   
   def run(sc: SparkContext,inputNodes: RDD[(Long, List[String])],inputEdges: RDD[(Long,String)]): RDD[(Long, List[String])] = {
-    
-    val cartesianInput = inputEdges.cartesian(inputEdges)
-    val mappedEdges = cartesianInput.map(f => if(f._1._2==f._2._2) Edge(f._1._1,f._2._1,1) else Edge(-1,-1,0)).filter(node => node.attr!=0)
+    val reverseEdges = inputEdges.map(f=>(f._2,Array(f._1))).reduceByKey(_ ++ _)
+    val joinInput = reverseEdges.flatMap(g => g._2.combinations(2).map(i => (i.head,i.last)))  
+    val mappedEdges = joinInput.map(f =>  Edge(f._1,f._2,1)).distinct()
     inputNodes.persist
     val entityGraph: Graph[(List[String]),Int] = Graph(inputNodes,mappedEdges)
     val connectedEntity =  entityGraph.connectedComponents().vertices.map(f => (f._1.toLong,f._2.toLong)).groupByKey()
