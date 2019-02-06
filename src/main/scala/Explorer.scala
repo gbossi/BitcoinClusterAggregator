@@ -29,7 +29,7 @@ object Explorer {
      val bitcoinBlocksRDD = sc.newAPIHadoopFile(inputFile, classOf[BitcoinBlockFileInputFormat], classOf[BytesWritable], classOf[BitcoinBlock], hadoopConf)
      //Parse the blockchain and retrieve all the transaction inside
      //Transaction(PreviousID,PreviousIndex,CurrentID,CurrentIndex,BitcoinAddress,Amount)
-     val bitcoinTransactionRDD = bitcoinBlocksRDD.sample(false, 0.1, 80551).flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2)).sample(false, 0.1, 80551)
+     val bitcoinTransactionRDD = bitcoinBlocksRDD.flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2))
 
      //Prepare the unwrapping of the transactions
      bitcoinTransactionRDD.persist()
@@ -46,31 +46,26 @@ object Explorer {
      //(ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
      val joinTransaction = mappedCurrTransaction.join(mappedPrevTransaction) 
      
-     
      //Create a new key using the common data
-     //Group all the exchanges using the Transaction ID_B
-     val groupedJoinTransaction = joinTransaction.map(f => (f._2._1.getTxID,f._2)).groupByKey()
-
+     //Group all the exchanges using the Transaction ID_A
+     val groupedJoinTransaction = joinTransaction.map(f => (f._2._1.getPrevTxID,f._2)).groupByKey()
      
      //Accumulate the interesting information getting the unwrapped Transaction
      //[Index,List(Bitcoin_Address_IN,Bitcoin_Address_OUT,Amount)]
      val tableOfTransaction = groupedJoinTransaction.mapValues(f => extractWalletTransaction(f)).zipWithIndex().map(f => (f._2,f._1._2)).distinct
 
-
-     //Checked until here
      
      //Take all the data about the Input Bitcoin Addresses
      //[Index,List(Bitcoin_Address_IN)]
      tableOfTransaction.persist()
-     val inputWallets = tableOfTransaction.map(f => (f._1,f._2.map(g => g._1)))
+     val inputWallets = tableOfTransaction.mapValues(f => f.map(g => g._1).distinct)
      val justTransaction = tableOfTransaction.flatMap(f => f._2)
      tableOfTransaction.unpersist()
-   
-
+     
      inputWallets.persist
      val flatWallets = inputWallets.flatMap(unwrapListNumberString(_))
      
-     val aggregateResult = EntityDependency.run(sc, inputWallets, flatWallets)  
+     val aggregateResult = EntityDependency.betterRun(sc, inputWallets, flatWallets)  
      inputWallets.unpersist()
      
      //Broadcast the result and be prepared for the broadcasted join
