@@ -18,7 +18,7 @@ import bitcoin.parser._
 object Explorer {
    def main(args: Array[String]): Unit = {
      val conf = new SparkConf().setAppName("Bitcoin Explorer")
-     val sc=new SparkContext(conf)
+     val sc= new SparkContext(conf)
      val hadoopConf = new Configuration()
      hadoopConf.set("hadoopcryptoledger.bitcoinblockinputformat.filter.magic","F9BEB4D9")
      parser(sc,hadoopConf,args(0),args(1))
@@ -48,12 +48,14 @@ object Explorer {
      
      //Create a new key using the common data
      //Group all the exchanges using the Transaction ID_A
-     val groupedJoinTransaction = joinTransaction.map(f => (f._2._1.getPrevTxID,f._2)).groupByKey()
+     val groupedJoinTransaction = joinTransaction.map(f => (f._2._2.getTxID,f._2)).groupByKey()
      
+    
      //Accumulate the interesting information getting the unwrapped Transaction
      //[Index,List(Bitcoin_Address_IN,Bitcoin_Address_OUT,Amount)]
-     val tableOfTransaction = groupedJoinTransaction.mapValues(f => extractWalletTransaction(f)).zipWithIndex().map(f => (f._2,f._1._2)).distinct
+     val tableOfTransaction = groupedJoinTransaction.mapValues(f => extractWalletTransaction(f)).zipWithIndex().map(f => (f._2,f._1._2))
 
+   
      
      //Take all the data about the Input Bitcoin Addresses
      //[Index,List(Bitcoin_Address_IN)]
@@ -62,10 +64,12 @@ object Explorer {
      val justTransaction = tableOfTransaction.flatMap(f => f._2)
      tableOfTransaction.unpersist()
      
-     inputWallets.persist
-     val flatWallets = inputWallets.flatMap(unwrapListNumberString(_))
      
-     val aggregateResult = EntityDependency.betterRun(sc, inputWallets, flatWallets)  
+     
+     inputWallets.persist
+     val flatWallets = inputWallets.flatMap(unwrapListStringNumber(_))
+     
+     val aggregateResult = EntityDependency.betterRun(sc, inputWallets, flatWallets,outputFile)  
      inputWallets.unpersist()
      
      //Broadcast the result and be prepared for the broadcasted join
@@ -79,12 +83,13 @@ object Explorer {
      val graph: Graph[(List[String]), BigInt] = Graph(aggregateResult, edges)
      aggregateResult.unpersist()
      
-     graph.triplets.saveAsTextFile(outputFile)
+     graph.vertices.saveAsTextFile(outputFile)
+     
    }
    
    def extractWalletTransaction(table : Iterable[(Transaction,Transaction)]): List[(String,String,BigInt)] ={
      //Incoming (ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
-     val ret = table.map(f => (f._1.getBicointAddress,f._2.getBicointAddress,f._1.getAmount)).toList
+     val ret = table.map(f => (f._1.getBicointAddress,f._2.getBicointAddress,f._2.getAmount)).toList
      //Outgoing Add2 -> send to  -> Add1 an amount of Am1
      ret;
    } 
@@ -99,15 +104,6 @@ object Explorer {
     tupleArray;
     }
   
-   def unwrapListNumberString(data:(Long,List[String])): Array[(Long,String)] ={
-    val dim = data._2.length 
-    val arrayString = data._2.toArray
-    val tupleArray:Array[(Long,String)] = new Array[(Long,String)](dim)
-    for(i <-0 to dim-1){
-       tupleArray(i) = (data._1,arrayString(i))
-    }
-    tupleArray;
-    }
    
    def extractTransactionData(bitcoinBlock: BitcoinBlock): Array[Transaction] = {
 
