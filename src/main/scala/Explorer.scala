@@ -21,11 +21,11 @@ object Explorer {
      val sc= new SparkContext(conf)
      val hadoopConf = new Configuration()
      hadoopConf.set("hadoopcryptoledger.bitcoinblockinputformat.filter.magic","F9BEB4D9")
-     parser(sc,hadoopConf,args(0),args(1))
+     parser(sc,hadoopConf,args(0),args(1),args(2))
      sc.stop()
      }
 
-   def parser(sc: SparkContext, hadoopConf: Configuration, inputFile: String, outputFile: String): Unit = {
+   def parser(sc: SparkContext, hadoopConf: Configuration, inputFile: String, outputVertices: String, outputEdges: String): Unit = {
      val bitcoinBlocksRDD = sc.newAPIHadoopFile(inputFile, classOf[BitcoinBlockFileInputFormat], classOf[BytesWritable], classOf[BitcoinBlock], hadoopConf)
      //Parse the blockchain and retrieve all the transaction inside
      //Transaction(PreviousID,PreviousIndex,CurrentID,CurrentIndex,BitcoinAddress,Amount)
@@ -69,7 +69,7 @@ object Explorer {
      inputWallets.persist
      val flatWallets = inputWallets.flatMap(unwrapListStringNumber(_))
      
-     val aggregateResult = EntityDependency.betterRun(sc, inputWallets, flatWallets,outputFile)  
+     val aggregateResult = EntityDependency.run(sc, inputWallets, flatWallets)  
      inputWallets.unpersist()
      
      //Broadcast the result and be prepared for the broadcasted join
@@ -80,10 +80,11 @@ object Explorer {
      val edges = justTransaction.map(f =>Edge(broadcastNodes.value.get(f._1).getOrElse(-1),broadcastNodes.value.get(f._2).getOrElse(-1),f._3))
          
      //Create the graph
-     val graph: Graph[(List[String]), BigInt] = Graph(aggregateResult, edges)
+     val graph: Graph[(List[String]), BigInt] = Graph(aggregateResult, edges).cache
      aggregateResult.unpersist()
      
-     graph.vertices.saveAsTextFile(outputFile)
+     graph.vertices.saveAsTextFile(outputVertices)
+     graph.edges.saveAsTextFile(outputEdges)
      
    }
    
