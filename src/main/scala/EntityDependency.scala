@@ -16,8 +16,7 @@ object EntityDependency extends Serializable{
         (numList, num) => {numList += num; numList},
          (numList1, numList2) => {numList1.appendAll(numList2); numList1})
             .map(_._2.distinct.toArray).flatMap(splitArrayEvery(_,4))
-            
-    
+             
     val mappedEdges = reverseEdges.flatMap(f => 
                 if(f.length==1) Iterator((f(0),f(0))) else
                   if(f.length==2) Iterator((f(0),f(1))) else
@@ -26,7 +25,7 @@ object EntityDependency extends Serializable{
     mappedEdges.count
     
     //return id -> cluster
-    val cc = ConnectedComponent.alternatingAlgo(mappedEdges, 9999999, 9999999, false, 0, 20)
+    val cc = ConnectedComponent.alternatingAlgo(mappedEdges, 9999999, 9999999, false, 0, 40)
     
     val reversecc = cc._1.map(f => (f._2,f._1))
     
@@ -40,17 +39,19 @@ object EntityDependency extends Serializable{
     result;
   }
   
-  def splitArrayEvery[T](xs: Array[T], sep: Int): List[Array[T]] = {
-    var res = List[Array[T]]()
-    if(xs.length>sep){
+  def splitArrayEvery(xs: Array[Long], sep: Int): List[Array[Long]] = {
+    var res = List[Array[Long]]()
+    val ordxs = xs.sortWith(_ > _)
+    val length = ordxs.length
+    if(length>sep){
       var i=0
-      val limit = (xs.length/sep).ceil.toInt
+      val limit = ((length-1).toFloat/(sep-1)).ceil.toInt
       for (j <- 1 to limit) {    
-        res ::= xs.slice(i, j*sep-1)
-        i = j*sep-1
+        res ::= ordxs.slice(i, List(i+sep,length).min)
+        i = j*(sep-1)
       }
     }else
-      res::=xs
+      res::=ordxs
     res
   } 
 }

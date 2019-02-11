@@ -69,20 +69,24 @@ object Explorer {
      inputWallets.persist
      val flatWallets = inputWallets.flatMap(unwrapListStringNumber(_))
      
+     //Return all the cluster of addresses
      val aggregateResult = EntityDependency.run(sc, inputWallets, flatWallets)  
      inputWallets.unpersist()
      
-     //Broadcast the result and be prepared for the broadcasted join
      aggregateResult.persist()
      val flatResult = aggregateResult.flatMap(unwrapListStringNumber(_))
 
-     val broadcastNodes = sc.broadcast(flatResult.collectAsMap)     
+     //Broadcast the map of the entities for the join
+     val broadcastNodes = sc.broadcast(flatResult.collectAsMap)  
+     
+     //Use the transaction to compose the edges between entities
      val edges = justTransaction.map(f =>Edge(broadcastNodes.value.get(f._1).getOrElse(-1),broadcastNodes.value.get(f._2).getOrElse(-1),f._3))
          
      //Create the graph
      val graph: Graph[(List[String]), BigInt] = Graph(aggregateResult, edges).cache
      aggregateResult.unpersist()
      
+     //Save the result ;)
      graph.vertices.saveAsTextFile(outputVertices)
      graph.edges.saveAsTextFile(outputEdges)
      
