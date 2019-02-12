@@ -1,9 +1,22 @@
+/**
+* Copyright 2017 ZuInnoTe (Jörn Franke) <zuinnote@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
+
 package bitcoin.structure;
 
 import java.util.Arrays;
-
-
-
 
 public class BitcoinScriptPatternParser {
 
@@ -129,7 +142,7 @@ private static String checkP2WSH(byte[] scriptPubKey) {
 *
 * @param scriptPubKey of transaction
 *
-* @return null, if transaction not about paying to hash, a string starting with "bitcoinaddress_" and ending with the hex values as String of the hash address
+* @return null, if transaction not about paying to hash, a string starting with "BA_" and ending with the hex values as String of the hash address
 *
 */
 
@@ -144,7 +157,7 @@ boolean validEnd=((scriptPubKey[23] & 0xFF)==0x88) && ((scriptPubKey[24]  & 0xFF
 
 	if (validStart && validEnd) {
 		byte[] bitcoinAddress = Arrays.copyOfRange(scriptPubKey, 3, 23);
-		return "bitcoinaddress_"+BitcoinUtil.convertByteArrayToHexString(bitcoinAddress);
+		return "BA_"+BitcoinUtil.convertByteArrayToHexString(bitcoinAddress);
 	} 
 	return null;
 }
@@ -154,13 +167,13 @@ boolean validEnd=((scriptPubKey[23] & 0xFF)==0x88) && ((scriptPubKey[24]  & 0xFF
 *
 * @param scriptPubKey of transaction
 *
-* @return null, if transaction not about paying to hash, a string starting with "bitcoinpubkey_" and ending with the hex values as String of the public key
+* @return null, if transaction not about paying to hash, a string starting with "BK_" and ending with the hex values as String of the public key
 *
 */
 private static String checkPayToPubKey(byte[] scriptPubKey) {
 if ((scriptPubKey.length>0) && ((scriptPubKey[scriptPubKey.length-1] & 0xFF)==0xAC)) {
 		byte[] publicKey =Arrays.copyOfRange(scriptPubKey, 0, scriptPubKey.length-1);
-		return "bitcoinpubkey_"+BitcoinUtil.convertByteArrayToHexString(publicKey);
+		return "BK_"+BitcoinUtil.convertByteArrayToHexString(publicKey);
 	}
 	return null;
 }

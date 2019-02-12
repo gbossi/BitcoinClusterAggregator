@@ -1,3 +1,18 @@
+/**
+* Copyright 2017 ZuInnoTe (Jörn Franke) <zuinnote@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
 package bitcoin.structure;
 
 import java.io.DataInput;
@@ -29,9 +44,9 @@ public BitcoinTransaction() {
 	this.flag=0;
 	this.inCounter=new byte[0];
 	this.outCounter=new byte[0];
-	this.listOfInputs=new ArrayList<>();
-	this.listOfOutputs=new ArrayList<>();
-	this.listOfScriptWitnessItem=new ArrayList<>();
+	this.listOfInputs=new ArrayList<BitcoinTransactionInput>();
+	this.listOfOutputs=new ArrayList<BitcoinTransactionOutput>();
+	this.listOfScriptWitnessItem=new ArrayList<BitcoinScriptWitnessItem>();
 	this.lockTime=0;
 }
 
@@ -54,7 +69,7 @@ public BitcoinTransaction(int version, byte[] inCounter, List<BitcoinTransaction
 	this.listOfInputs=listOfInputs;
 	this.outCounter=outCounter;
 	this.listOfOutputs=listOfOutputs;
-	this.listOfScriptWitnessItem=new ArrayList<>();
+	this.listOfScriptWitnessItem=new ArrayList<BitcoinScriptWitnessItem>();
 	this.lockTime=lockTime;
 }
 
@@ -135,12 +150,12 @@ public void set(BitcoinTransaction newTransaction) {
 
 /** Writable **/
 
-  @Override
+
   public void write(DataOutput dataOutput) throws IOException {
     throw new UnsupportedOperationException("write unsupported");
   }
 
-  @Override
+
   public void readFields(DataInput dataInput) throws IOException {
     throw new UnsupportedOperationException("readFields unsupported");
   }

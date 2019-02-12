@@ -1,4 +1,18 @@
-
+/**
+* Copyright 2017 ZuInnoTe (Jörn Franke) <zuinnote@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
 
 package bitcoin.structure;
 
@@ -270,7 +284,7 @@ public BitcoinAuxPOWBranch parseAuxPOWBranch(ByteBuffer rawByteBuffer) {
 */
 
 public List<BitcoinTransaction> parseTransactions(ByteBuffer rawByteBuffer,long noOfTransactions) {
-	ArrayList<BitcoinTransaction> resultTransactions = new ArrayList<>((int)noOfTransactions);
+	ArrayList<BitcoinTransaction> resultTransactions = new ArrayList<BitcoinTransaction>((int)noOfTransactions);
 	// read all transactions from ByteBuffer
 	for (int k=0;k<noOfTransactions;k++) {
 		// read version
@@ -316,12 +330,12 @@ public List<BitcoinTransaction> parseTransactions(ByteBuffer rawByteBuffer,long 
 			// read scriptWitness size
 			
 			
-			 currentListOfTransactionSegwits=new ArrayList<>();
+			 currentListOfTransactionSegwits=new ArrayList<BitcoinScriptWitnessItem>();
 			for (int i=0;i<currentNoOfInputs;i++) {
 				// get no of witness items for input
 				byte[] currentWitnessCounterVarInt=BitcoinUtil.convertVarIntByteBufferToByteArray(rawByteBuffer);
 				long currentNoOfWitnesses=BitcoinUtil.getVarInt(currentWitnessCounterVarInt);
-				List<BitcoinScriptWitness> currentTransactionSegwit = new ArrayList<>((int)currentNoOfWitnesses);
+				List<BitcoinScriptWitness> currentTransactionSegwit = new ArrayList<BitcoinScriptWitness>((int)currentNoOfWitnesses);
 				for (int j=0;j<(int)currentNoOfWitnesses;j++) {
 					// read size of segwit script
 					byte[] currentTransactionSegwitScriptLength=BitcoinUtil.convertVarIntByteBufferToByteArray(rawByteBuffer);
@@ -336,7 +350,7 @@ public List<BitcoinTransaction> parseTransactions(ByteBuffer rawByteBuffer,long 
 				currentListOfTransactionSegwits.add(new BitcoinScriptWitnessItem(currentWitnessCounterVarInt,currentTransactionSegwit));
 			}
 		} else {
-			currentListOfTransactionSegwits=new  ArrayList<>();
+			currentListOfTransactionSegwits=new  ArrayList<BitcoinScriptWitnessItem>();
 		}
 		// lock_time
 		int currentTransactionLockTime = rawByteBuffer.getInt();
@@ -357,7 +371,7 @@ public List<BitcoinTransaction> parseTransactions(ByteBuffer rawByteBuffer,long 
  * 
  */
 public List<BitcoinTransactionInput> parseTransactionInputs(ByteBuffer rawByteBuffer, long noOfTransactionInputs) {
-	ArrayList<BitcoinTransactionInput> currentTransactionInput = new ArrayList<>((int)noOfTransactionInputs);
+	ArrayList<BitcoinTransactionInput> currentTransactionInput = new ArrayList<BitcoinTransactionInput>((int)noOfTransactionInputs);
 	
 	for (int i=0;i<noOfTransactionInputs;i++) {
 		// read previous Hash of Transaction
@@ -390,7 +404,7 @@ public List<BitcoinTransactionInput> parseTransactionInputs(ByteBuffer rawByteBu
  * 
  */
 public List<BitcoinTransactionOutput> parseTransactionOutputs(ByteBuffer rawByteBuffer, long noOfTransactionOutputs) {
-	ArrayList<BitcoinTransactionOutput> currentTransactionOutput = new ArrayList<>((int)(noOfTransactionOutputs));
+	ArrayList<BitcoinTransactionOutput> currentTransactionOutput = new ArrayList<BitcoinTransactionOutput>((int)(noOfTransactionOutputs));
 	for (int i=0;i<noOfTransactionOutputs;i++) {
 		// read value
 	

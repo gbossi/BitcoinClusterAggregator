@@ -49,7 +49,7 @@ public BitcoinBlock() {
 	this.transactionCounter=0;
 	this.hashPrevBlock=new byte[0];
 	this.hashMerkleRoot=new byte[0];
-	this.transactions=new ArrayList<>();
+	this.transactions=new ArrayList<BitcoinTransaction>();
 	this.auxPOW=new BitcoinAuxPOW();
 }
 
@@ -161,12 +161,12 @@ public void set(BitcoinBlock newBitcoinBlock) {
 
 /** Writable **/
 
-  @Override
+
   public void write(DataOutput dataOutput) throws IOException {
     throw new UnsupportedOperationException("write unsupported");
   }
 
-  @Override
+
   public void readFields(DataInput dataInput) throws IOException {
     throw new UnsupportedOperationException("readFields unsupported");
   }
