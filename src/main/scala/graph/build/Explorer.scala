@@ -18,24 +18,29 @@
  * 
  */
 
-import main.scala._
 
+import bitcoin.parser._
+import bitcoin.structure._
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.rdd.RDD
 import org.apache.spark.graphx._
 import org.apache.hadoop.conf._
 import scala.math.BigInt
-
-import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.io._
 import scala.collection.JavaConverters._
+import bitcoin.parser.BitcoinBlockFileInputFormat
+import bitcoin.structure.BitcoinBlock
+import org.apache.hadoop.io.BytesWritable
+import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
+import bitcoin.parser.BitcoinBlockFileInputFormat
+import bitcoin.structure.BitcoinBlock
+import org.apache.hadoop.io.BytesWritable
 
-import bitcoin.structure._
-import bitcoin.parser._
+
 
 object Explorer {
+  
    def main(args: Array[String]): Unit = {
      val conf = new SparkConf().setAppName("Bitcoin Explorer")
      val sc= new SparkContext(conf)
@@ -44,80 +49,108 @@ object Explorer {
      parser(sc,hadoopConf,args(0),args(1),args(2))
      sc.stop()
      }
+   
+   /**
+		* Parse the Block-chain into a entity-based graph 
+		* 
+    * @param sc current spark context
+    * @param hadoopConf current spark
+    * @param inputFile hdfs directory location where the blockchain is stored
+    * @param outputVertices directory location where to store the vertices 
+    * @param outputEdges directory location where to store the edges
+		*
+    */
 
    def parser(sc: SparkContext, hadoopConf: Configuration, inputFile: String, outputVertices: String, outputEdges: String): Unit = {
      val bitcoinBlocksRDD = sc.newAPIHadoopFile(inputFile, classOf[BitcoinBlockFileInputFormat], classOf[BytesWritable], classOf[BitcoinBlock], hadoopConf)
-     //Parse the blockchain and retrieve all the transaction inside
-     //Transaction(PreviousID,PreviousIndex,CurrentID,CurrentIndex,BitcoinAddress,Amount)
-     val bitcoinTransactionRDD = bitcoinBlocksRDD.flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2))
 
-     //Prepare the unwrapping of the transactions
+     val bitcoinTransactionRDD = bitcoinBlocksRDD.flatMap(hadoopKeyValueTuple => extractTransactionData(hadoopKeyValueTuple._2))
+     
      bitcoinTransactionRDD.persist()
      
-     //Map the transactions using as key (PreviousId,PreviousIndex)
+     /** Map the transactions using as key (PreviousId,PreviousIndex) */
      val mappedPrevTransaction = bitcoinTransactionRDD.map(f => ((f.getPrevTxID.+(f.getPrevTxIndex)),f))
-     //Map the transactions using as key (CurrentId,CurrentIndex)
+     
+     /** Map the transactions using as key (CurrentId,CurrentIndex) */
      val mappedCurrTransaction = bitcoinTransactionRDD.map(f => ((f.getTxID.+(f.getTxIndex)),f))
      
      bitcoinTransactionRDD.unpersist()
      
      
-     //Join the transaction using as joining factor key == key -> (PreviousId,PreviousIndex)==(CurrentId,CurrentIndex)
-     //(ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
+     /** Join the transaction using as joining key (PreviousId,PreviousIndex)==(CurrentId,CurrentIndex) */
      val joinTransaction = mappedCurrTransaction.join(mappedPrevTransaction) 
      
-     //Create a new key using the common data
-     //Group all the exchanges using the Transaction ID_A
+     /** Group all the transactions using the Transaction Identifier of the previous transaction */
      val groupedJoinTransaction = joinTransaction.map(f => (f._2._2.getTxID,f._2)).groupByKey()
      
     
-     //Accumulate the interesting information getting the unwrapped Transaction
-     //[Index,List(Bitcoin_Address_IN,Bitcoin_Address_OUT,Amount)]
+     /** Extract all the information of the transactions and assign for each of them an ID number  */
      val tableOfTransaction = groupedJoinTransaction.mapValues(f => extractWalletTransaction(f)).zipWithIndex().map(f => (f._2,f._1._2))
 
    
      
-     //Take all the data about the Input Bitcoin Addresses
-     //[Index,List(Bitcoin_Address_IN)]
      tableOfTransaction.persist()
+     
+     /***/
      val inputWallets = tableOfTransaction.mapValues(f => f.map(g => g._1).distinct)
+     
+     /***/
      val justTransaction = tableOfTransaction.flatMap(f => f._2)
+     
      tableOfTransaction.unpersist()
      
-     
-     
      inputWallets.persist
+     
+     /** Flat and reorder the input wallets before the clustering*/
      val flatWallets = inputWallets.flatMap(unwrapListStringNumber(_))
      
-     //Return all the cluster of addresses
+     /** return the list of cluster of addresses */
      val aggregateResult = EntityDependency.run(sc, inputWallets, flatWallets)  
+     
      inputWallets.unpersist()
      
+     
      aggregateResult.persist()
+     
+     /** Flat the result before the mapping */
      val flatResult = aggregateResult.flatMap(unwrapListStringNumber(_))
 
-     //Broadcast the map of the entities for the join
+     /** Maps each address with the belonging address */
      val broadcastNodes = sc.broadcast(flatResult.collectAsMap)  
      
-     //Use the transaction to compose the edges between entities
+     /** Use the transaction to compose the edges between entities */
      val edges = justTransaction.map(f =>Edge(broadcastNodes.value.get(f._1).getOrElse(-1),broadcastNodes.value.get(f._2).getOrElse(-1),f._3))
          
-     //Create the graph
      val graph: Graph[(List[String]), BigInt] = Graph(aggregateResult, edges).cache
      aggregateResult.unpersist()
      
-     //Save the result ;)
-     graph.vertices.saveAsTextFile(outputVertices)
-     graph.edges.saveAsTextFile(outputEdges)
+     /** Save the result ;) */
+     graph.vertices.saveAsObjectFile(outputVertices)
+     graph.edges.saveAsObjectFile(outputEdges)
      
    }
    
+   
+   /**
+    * Extract from a iterable of joined transaction a list of tuple containing Souce Address, the Target Address and the Amount of Satoshis Exchanged
+    * 
+    * @param table a list of joined transactions
+    * 
+    * @return a list tuple containing the source address the destination address and the amount exchanged
+    */
+   
    def extractWalletTransaction(table : Iterable[(Transaction,Transaction)]): List[(String,String,BigInt)] ={
-     //Incoming (ID_A,IN_A,ID_B,IN_B,Add1,Am1) <-> (ID_B,IN_B,ID_C,IN_C,Add2,Am2)
      val ret = table.map(f => (f._1.getBicointAddress,f._2.getBicointAddress,f._2.getAmount)).toList
-     //Outgoing Add2 -> send to  -> Add1 an amount of Am1
      ret;
    } 
+   
+   /**
+    * Unwrap the the tuple to provide a flat result
+    * 
+    * @param data a tuple containing an ID associated with a list of addresses
+    * 
+    * @return an array of tuple (Address, ID) 
+    */
    
    def unwrapListStringNumber(data:(Long,List[String])): Array[(String,Long)] ={
     val dim = data._2.length 
@@ -129,6 +162,13 @@ object Explorer {
     tupleArray;
     }
   
+   /**
+		* Extract from a bitcoin block all the transaction inside
+		* 
+    * @param bitcoinBlock 
+    * 
+    * @return an array containing all the transaction inside the block
+    */
    
    def extractTransactionData(bitcoinBlock: BitcoinBlock): Array[Transaction] = {
 
@@ -160,5 +200,3 @@ object Explorer {
 		transactions;
   }
 }
-   
-    

@@ -18,8 +18,9 @@
  * 
  */
 
-package main.scala
-import java.math.BigInteger;
+
+import java.math.BigInteger
+import scala.BigInt
 
 
 class Transaction(entID: Array[Byte],entNum:Long,fromID: Array[Byte],prevNum:Long,address:String, btAmount: BigInteger) extends Serializable {

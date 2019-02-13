@@ -1,4 +1,3 @@
-package main.scala
 /**
   * Copyright (c) 2017 Kwartile, Inc., http://www.kwartile.com
   * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,7 +29,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import scala.annotation.tailrec
 import scala.collection.mutable
-
+import org.apache.spark.rdd.RDD.numericRDDToDoubleRDDFunctions
+import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
+import scala.Iterator
 
 object ConnectedComponent extends Serializable {
 
@@ -109,7 +110,7 @@ object ConnectedComponent extends Serializable {
   /**
     * Apply Large Star operation on a RDD of nodePairs
     * @param nodePairs on which to apply Large Star operations
-    * @return new nodePairs after the operation and conncectivy change count
+    * @return new nodePairs after the operation and connectivity change count
     */
   private def largeStar(nodePairs: RDD[(Long, Long)]): (RDD[(Long, Long)], Int) = {
 
