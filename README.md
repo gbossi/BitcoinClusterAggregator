@@ -92,7 +92,7 @@ Every entity is the union of a set of partial entity. So, for each  cluster, ret
 ## Entity Graph
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/resulting_graph.png">
+  <img width="40%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/resulting_graph.png">
 </p>
 
 ### Instruction
