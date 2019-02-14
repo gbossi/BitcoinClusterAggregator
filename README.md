@@ -32,7 +32,7 @@ So, given a current transaction and a previous one with the backward link of the
 the resulting unwrapping it’s the following:
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/transaction.png">
+  <img width="40%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/transaction.png">
 </p>
 
 
@@ -45,7 +45,7 @@ This cluster is formed by all the addresses that has been used simultaneously as
 So, for example an entity is the following: 
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/partial_entity.png">
+  <img width="40%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/partial_entity.png">
 </p>
  
 But this kind of entity results incomplete, since there could be another transaction that involves one of more addresses previously used.  It’s clear the concept of partial entity, the inputs address of a single transaction describe a possible subset of all the entity’s addresses. 
@@ -65,13 +65,13 @@ After we accumulate for each address all the entity in which it is present:
 (address,List[PartialEntity])
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/initial_config.png">
+  <img width="50%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/initial_config.png">
 </p>
  
 Now we got for each address all the intersection over the partial entities. From this list we create a list of edges that links all the partial entities together. In order to save memory and computational power, the shape of all the subgraphs defined by a partial entity is a chain. 
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/intermediate_result.png">
+  <img width="40%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/intermediate_result.png">
 </p>
 
 So, given a list of edges it’s possible to run the connected components algorithm over the set of subgraphs.
@@ -80,13 +80,13 @@ So, given a list of edges it’s possible to run the connected components algori
 The result of the connected components algorithm is the following:
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/cc_result.png">
+  <img width="30%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/ccresult.png">
 </p>
 
 Every entity is the union of a set of partial entity. So, for each  cluster, retrieving the content of each partial entity and reassembling together all the addresses we finally find all the entities. 
 
 <p align="center">
-  <img width="75%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/final_result.png">
+  <img width="30%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/finalResult.png">
 </p>
 
 ## Entity Graph
