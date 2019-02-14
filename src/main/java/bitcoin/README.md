@@ -5,6 +5,6 @@ This repository will provide various components to read crypto ledgers, such as 
 
 You find more information about the project in the [Wiki](https://github.com/ZuInnoTe/hadoopcryptoledger/wiki).
 
-The licence can be found inside this directory.
+The license can be found inside this directory.
 
 
