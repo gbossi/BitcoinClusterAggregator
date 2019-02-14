@@ -5,7 +5,7 @@
 
 ## Abstract
 
-The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project all the data will be stored inside hdfs and the algorithms computation is managed by Spark enviroment.
+The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project inpit and output data are stored inside Hadoop Filsystem (hdfs) and the algorithms computation is managed by the Spark cluster computing system.
 
 ## Approach
 
@@ -100,7 +100,7 @@ Inside the graph the (-1) node indicates all the exchanges that points a new (ne
 
 Inside the misc folder it's also possible to find two sample algorithms, a pagerank and a triangle counter.
 The pagerank algorithm returns the ordered list of entity nodes, in order of importance.
-The triangle counter nodes return the list of entity nodes oredered by the number of triangle found.
+The triangle counter nodes return the list of entity nodes ordered by the number of triangle found.
 
 ## Test Results
 
