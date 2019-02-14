@@ -3,37 +3,21 @@
   <groupId>gbossi</groupId>
   <artifactId>BitcoinExplorer</artifactId>
   <version>0.0.1</version>
+
 <properties>
-<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-<java.version>1.8</java.version>
-<scala.version>2.11.11</scala.version>
-<scala.version.tools>2.11</scala.version.tools>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<java.version>1.8</java.version>
+	<scala.version>2.11.12</scala.version>
+	<scala.version.tools>2.11</scala.version.tools>
 </properties>
 
 <dependencies>
-<dependency>
-<groupId>org.scala-lang</groupId>
-<artifactId>scala-library</artifactId>
-<version>${scala.version}</version>
-</dependency>
-<dependency>
-<groupId>junit</groupId>
-<artifactId>junit</artifactId>
-<version>4.11</version>
-<scope>test</scope>
-</dependency>
-<dependency>
-<groupId>org.scalacheck</groupId>
-<artifactId>scalacheck_${scala.version.tools}</artifactId>
-<version>1.11.4</version>
-<scope>test</scope>
-</dependency>
-<dependency>
-<groupId>org.scalatest</groupId>
-<artifactId>scalatest_${scala.version.tools}</artifactId>
-<version>2.2.0</version>
-<scope>test</scope>
-</dependency>
+    <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
+    </dependency>
+
 		<dependency>
           <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
@@ -67,39 +51,73 @@
 
 <build>
     <plugins>
+<!-- This plugin compiles Scala files -->
         <plugin>
-  				<groupId>com.mysema.scalagen</groupId>
-  				<artifactId>scalagen-maven-plugin</artifactId>
-  				<version>0.2.2</version>
-		</plugin>
-        <plugin>
-            <groupId>org.scala-tools</groupId>
-            <artifactId>maven-scala-plugin</artifactId>
-            <version>2.15.2</version>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <version>3.4.6</version>
             <executions>
-
                 <execution>
-                    <id>compile</id>
+                    <id>scala-compile-first</id>
+                    <phase>process-resources</phase>
                     <goals>
+                        <goal>add-source</goal>
                         <goal>compile</goal>
                     </goals>
-                    <phase>compile</phase>
                 </execution>
                 <execution>
-                    <id>test-compile</id>
+                    <id>scala-test-compile</id>
+                    <phase>process-test-resources</phase>
                     <goals>
                         <goal>testCompile</goal>
                     </goals>
-                    <phase>test-compile</phase>
                 </execution>
+            </executions>
+        </plugin>
+<!-- This plugin compiles Java files -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.0</version>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+            </configuration>
+            <executions>
                 <execution>
-                    <phase>process-resources</phase>
+                    <phase>compile</phase>
                     <goals>
                         <goal>compile</goal>
                     </goals>
                 </execution>
             </executions>
         </plugin>
+<!-- This plugin adds all dependencies to JAR file during 'package' command.
+Pay EXTRA attention to the 'mainClass' tag. 
+You have to set name of class with entry point to program ('main' method) -->
+        <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.5.3</version>
+            <configuration>
+                <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+                <archive>
+                    <manifest>
+                        <mainClass>TriangleCount</mainClass>
+                    </manifest>
+                </archive>
+            </configuration>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>single</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+         
     </plugins>
 </build>
 

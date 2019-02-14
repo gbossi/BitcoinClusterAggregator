@@ -1,5 +1,5 @@
 /**
- *  Bitcoin Address Explorer 
+ *  Bitcoin Cluster Aggregator 
  *  Cluster-based graph representation of the bitcoin blockchain
  *  Copyright (C) 2019  Giacomo Bossi
  *
@@ -25,7 +25,7 @@ import org.apache.hadoop.conf._
 import scala.math.BigInt
 
 
-class TriangleCount {
+object TriangleCount {
   def main(args: Array[String]): Unit = {
      val conf = new SparkConf().setAppName("Bitcoin Entity - Triangle count")
      val sc= new SparkContext(conf)
@@ -46,6 +46,6 @@ class TriangleCount {
     val triCountNodes = vertices.join(triCounts).map { case (id, (username, tc)) =>
       (username, tc)
         }
-    triCountNodes.sortBy(_._2, false, 1).saveAsObjectFile(output)
+    triCountNodes.sortBy(_._2, false, 1).saveAsTextFile(output)
   }
 }

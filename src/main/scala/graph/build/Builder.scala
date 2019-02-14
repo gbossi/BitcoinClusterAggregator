@@ -1,5 +1,5 @@
 /**
- *  Bitcoin Address Explorer 
+ *  Bitcoin Cluster Aggregator
  *  Cluster-based graph representation of the bitcoin blockchain
  *  Copyright (C) 2019  Giacomo Bossi
  *
@@ -39,7 +39,7 @@ import org.apache.hadoop.io.BytesWritable
 
 
 
-object Explorer {
+object Builder {
   
    def main(args: Array[String]): Unit = {
      val conf = new SparkConf().setAppName("Bitcoin Explorer")

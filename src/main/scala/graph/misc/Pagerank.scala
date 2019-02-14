@@ -1,5 +1,5 @@
 /**
- *  Bitcoin Address Explorer 
+ *  Bitcoin Cluster Aggregator 
  *  Cluster-based graph representation of the bitcoin blockchain
  *  Copyright (C) 2019  Giacomo Bossi
  *
@@ -23,7 +23,7 @@ import org.apache.spark.graphx._
 import org.apache.hadoop.conf._
 import scala.math.BigInt
 
-class Pagerank {
+object Pagerank {
   
   def main(args: Array[String]): Unit = {
      val conf = new SparkConf().setAppName("Bitcoin Entity - Graph Pagerank")
@@ -45,6 +45,6 @@ class Pagerank {
     (v, addresses, rank) => (rank.getOrElse(0.0), addresses)
     }
     
-    titleAndPrGraph.vertices.sortBy(_._2._1, false, 1).saveAsObjectFile(output)
+    titleAndPrGraph.vertices.sortBy(_._2._1, false, 1).saveAsTextFile(output)
   }
 }

@@ -1,5 +1,5 @@
 /**
- *  Bitcoin Address Explorer 
+ *  Bitcoin Cluster Aggregator 
  *  Cluster-based graph representation of the bitcoin blockchain
  *  Copyright (C) 2019  Giacomo Bossi
  *
