@@ -5,7 +5,7 @@
 
 ## Abstract
 
-The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach.
+The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project all the data will be stored inside hdfs and the algorithms computation is managed by Spark enviroment.
 
 ## Approach
 
