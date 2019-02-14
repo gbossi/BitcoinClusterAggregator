@@ -90,12 +90,21 @@ Every entity is the union of a set of partial entity. So, for each  cluster, ret
 </p>
 
 ## Entity Graph
-
+The result of the previous computation over all the nodes of the block-chain combined with the all the transaction creates a new graph, the entity graph, a useful instrument to track the bitcoin exchanges between entities like bitcoin exchanges, e-commerce stores, cryptocurrency lottery and many other. 
+A possible representation of the computation is the following
 <p align="center">
   <img width="40%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/resulting_graph.png">
 </p>
+
+Inside the graph the (-1) node indicates all the exchanges that points a new (never-used) bitcoin address. 
+
+Inside the misc folder it's also possible to find two sample algorithms, a pagerank and a triangle counter.
+The pagerank algorithm returns the ordered list of entity nodes, in order of importance.
+The triangle counter nodes return the list of entity nodes oredered by the number of triangle found.
+
 ## Test Results
 
+Still to be performed
 
 ### Instruction
 Build the project using maven
