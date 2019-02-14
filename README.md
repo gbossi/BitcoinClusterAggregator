@@ -75,7 +75,7 @@ hadoop fs -mkdir -p /user/bitcoin/input
 hadoop fs -put ~./.bitcoin/blocks/blk*.dat /user/bitcoin/input
 ```
 
-Run the clusted-based graph:
+Run the cluster-based graph builder:
 ```
 spark-submit --class Builder --master local[4] ./target/BitcoinExplorer-0.0.1.jar hdfs://localhost:9000/user/bitcoin/input hdfs://localhost:9000/user/bitcoin/output/vertices hdfs://localhost:9000/user/bitcoin/output/edges
 ```
