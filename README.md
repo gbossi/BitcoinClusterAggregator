@@ -94,9 +94,11 @@ Every entity is the union of a set of partial entity. So, for each  cluster, ret
 <p align="center">
   <img width="40%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/resulting_graph.png">
 </p>
+## Test Results
+
 
 ### Instruction
-Build using mave the project
+Build the project using maven
 ```
 mvn clean install
 ```
