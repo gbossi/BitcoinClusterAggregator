@@ -79,15 +79,13 @@ So, given a list of edges it’s possible to run the connected components algori
 ### Connected Components
 The result of the connected components algorithm is the following:
 
-<p align="center">
-  <img width="30%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/ccresult.png">
-</p>
+Initial Graph           |  Connected Component Result | Resulting Entity
+:-------------------------:|:-------------------------:|:---------------------------:|
+![](https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/chain_graph.png)  |  ![](https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/ccresult.png) | ![](https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/finalResult.png)
 
-Every entity is the union of a set of partial entity. So, for each  cluster, retrieving the content of each partial entity and reassembling together all the addresses we finally find all the entities. 
+Every entity is the union of a set of partial entity. So, for each  cluster, retrieving the content of each partial entity and reassembling together all the addresses we finally find a complete entity. 
 
-<p align="center">
-  <img width="30%" src="https://github.com/gbossi/BitcoinClusterAggregator/blob/master/img/finalResult.png">
-</p>
+
 
 ## Entity Graph
 The result of the previous computation over all the nodes of the block-chain combined with the all the transaction creates a new graph, the entity graph, a useful instrument to track the bitcoin exchanges between entities like bitcoin exchanges, e-commerce stores, cryptocurrency lottery and many other. 
