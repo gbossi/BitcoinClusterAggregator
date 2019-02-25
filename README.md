@@ -5,7 +5,7 @@
 
 ## Abstract
 
-The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project inpit and output data are stored inside Hadoop Filsystem (hdfs) and the algorithms computation is managed by the Spark cluster computing system.
+The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project inpit and output data are stored inside Hadoop Filesystem (hdfs) and the algorithms computation is managed by the Spark cluster computing system.
 
 ## Approach
 
@@ -100,9 +100,7 @@ Inside the misc folder it's also possible to find two sample algorithms, a pager
 The pagerank algorithm returns the ordered list of entity nodes, in order of importance.
 The triangle counter nodes return the list of entity nodes ordered by the number of triangle found.
 
-## Test Results
-
-Still to be performed
+##### *Project made during the Erasmus Programme @ National Technique University of Athens *
 
 ### Instruction
 Build the project using maven
@@ -131,3 +129,4 @@ Run the Triangle Count Algorithm
 spark-submit --class TriangleCount --master local[4] ./target/BitcoinExplorer-0.0.1.jar hdfs://localhost:9000/user/bitcoin/output/vertices hdfs://localhost:9000/user/bitcoin/output/edges hdfs://localhost:9000/user/bitcoin/output/trianglecount
 ```
 
+###### *2018-2019*
