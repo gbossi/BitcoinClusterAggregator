@@ -100,7 +100,7 @@ Inside the misc folder it's also possible to find two sample algorithms, a pager
 The pagerank algorithm returns the ordered list of entity nodes, in order of importance.
 The triangle counter nodes return the list of entity nodes ordered by the number of triangle found.
 
-##### *Project made during the Erasmus Programme @ National Technique University of Athens *
+##### *Project made during the Erasmus Programme @ National Technique University of Athens*
 
 ### Instruction
 Build the project using maven
