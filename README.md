@@ -5,7 +5,7 @@
 
 ## Abstract
 
-The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project inpit and output data are stored inside Hadoop Filesystem (hdfs) and the algorithms computation is managed by the Spark cluster computing system.
+The aim of the project is to parse and analyze the bitcoin block-chain in order to retrieve useful information about the transaction between known wallets, using a distributed approach. In this project input and output data are stored inside Hadoop Filesystem (hdfs) and the algorithms computation is managed by the Spark cluster computing system.
 
 ## Approach
 
